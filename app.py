@@ -49,15 +49,6 @@ def get_sensor_values():
                 'number_of_values': len(record_values),
                 'sensor_values': record_values}, 200
 
-
-
-
-
-
-
-
-
-
 if __name__ == '__main__':
 
    app.run(debug=True,port=9234)
