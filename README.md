@@ -4,7 +4,7 @@ How to run the application?
 1. Install Docker
 https://docs.docker.com/desktop/windows/install/
 
-2. Go the repo folder in terminal
+2. Go to the repo folder in terminal
 
 3. run the command docker-compose up
 
