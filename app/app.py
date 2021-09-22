@@ -90,7 +90,7 @@ def get_sensor_values():
     if start_date_time and end_date_time:
         records = SensorInfo.query.filter(and_(SensorInfo.sensor_id == sensor_id, SensorInfo.captured_time >= start_date_time,
                                                 SensorInfo.captured_time <= end_date_time))
-        record_values = [record.value for record in records]
+        record_values = [(record.value, record.captured_time.strftime('%Y-%m-%d %H:%M:%S')) for record in records]
         return {'sensor_name': sensor.sensor_name,
                 'number_of_values': len(record_values),
                 'sensor_values': record_values}, 200
