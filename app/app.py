@@ -10,6 +10,7 @@ app = Flask(__name__)
 
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:root@db/data_analysis'
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://lalith:Data_Mart123@localhost/data_analysis'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['debug'] = True
 db = SQLAlchemy(app)
@@ -88,9 +89,16 @@ def get_sensor_values():
         return {'Message': "Sensor Id is not valid"}, 400
 
     if start_date_time and end_date_time:
-        records = SensorInfo.query.filter(and_(SensorInfo.sensor_id == sensor_id, SensorInfo.captured_time >= start_date_time,
+        records = SensorInfo.query.with_entities(
+            SensorInfo.value, SensorInfo.captured_time).filter(and_(SensorInfo.sensor_id == sensor_id,
+                                                                    SensorInfo.captured_time >= start_date_time,
                                                 SensorInfo.captured_time <= end_date_time))
-        record_values = [(record.value, record.captured_time.strftime('%Y-%m-%d %H:%M:%S')) for record in records]
+        print("Query completed")
+        # record_values = [record.value for record in records]
+        # import pdb
+        # pdb.set_trace()
+        # record_values = [(record.value, record.captured_time.strftime('%Y-%m-%d %H:%M:%S')) for record in records]
+        record_values = [(record.value, record.captured_time) for record in records]
         return {'sensor_name': sensor.sensor_name,
                 'number_of_values': len(record_values),
                 'sensor_values': record_values}, 200
