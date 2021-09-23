@@ -13,8 +13,7 @@ CREATE TABLE `sensor_info` (
   `sensor_info_id` int NOT NULL AUTO_INCREMENT,
   `sensor_id` int NOT NULL,
   `value` float NOT NULL,
-  `captured_time` datetime NOT NULL,
-  `created` datetime DEFAULT CURRENT_TIMESTAMP,
+  `created_time` TIMESTAMP(6) DEFAULT CURRENT_TIMESTAMP(6),
   PRIMARY KEY (`sensor_info_id`),
   KEY `ix_sensor_info_sensor_id` (`sensor_id`),
   CONSTRAINT `sensor_info_ibfk_1` FOREIGN KEY (`sensor_id`) REFERENCES `sensor` (`sensor_id`)

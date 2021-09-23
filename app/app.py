@@ -1,16 +1,17 @@
 import datetime
+from time import sleep
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 import numpy as np
 from sqlalchemy.sql import func
 from flask import request
-from sqlalchemy import and_
+from sqlalchemy.dialects.mysql import DATETIME
+import mysql.connector
 
 app = Flask(__name__)
 
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:root@db/data_analysis'
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://lalith:Data_Mart123@localhost/data_analysis'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['debug'] = True
 db = SQLAlchemy(app)
@@ -27,8 +28,7 @@ class SensorInfo(db.Model):
     sensor_info_id = db.Column(db.Integer, primary_key=True)
     sensor_id = db.Column(db.ForeignKey('sensor.sensor_id'), nullable=False, index=True)
     value = db.Column(db.Float, nullable=False)
-    captured_time = db.Column(db.DateTime, nullable=False)
-    created = db.Column(db.DateTime(timezone=True), server_default=func.now())
+    created_time = db.Column(DATETIME(fsp=6))
 
 @app.route('/')
 def index():
@@ -56,11 +56,9 @@ def insert_sensor_values():
         sensor_to_query = check_sensor.sensor_id
     for _ in range(int(num_value)):
         random_number = np.random.random()
-        captured_time = datetime.datetime.now()
-        add_sensor_value = SensorInfo(value=random_number, sensor_id=sensor_to_query,
-                                      captured_time=captured_time)
+        add_sensor_value = SensorInfo(value=random_number, sensor_id=sensor_to_query)
         db.session.add(add_sensor_value)
-        db.session.commit()
+    db.session.commit()
 
     return {'Message': 'Successfully Added Sensor Values',
             'sensor_id': sensor_to_query,
@@ -85,23 +83,25 @@ def get_sensor_values():
 
     sensor = Sensor.query.filter_by(sensor_id=sensor_id).first()
 
+    config = {
+        'user': 'root',
+        'password': 'root',
+        'host': 'db',
+        'port': '3306',
+        'database': 'data_analysis'
+    }
+    connection = mysql.connector.connect(**config)
+    cursor = connection.cursor()
+    cursor.execute('SELECT value, created_time FROM sensor_info where created_time >= "{}" and created_time <= "{}"'.format(start_date_time, end_date_time))
+    results = [(value, created_time.strftime('%Y-%m-%d %H:%M:%S.%f')) for (value, created_time) in cursor]
+    cursor.close()
+    connection.close()
+
     if sensor is None:
         return {'Message': "Sensor Id is not valid"}, 400
-
-    if start_date_time and end_date_time:
-        records = SensorInfo.query.with_entities(
-            SensorInfo.value, SensorInfo.captured_time).filter(and_(SensorInfo.sensor_id == sensor_id,
-                                                                    SensorInfo.captured_time >= start_date_time,
-                                                SensorInfo.captured_time <= end_date_time))
-        print("Query completed")
-        # record_values = [record.value for record in records]
-        # import pdb
-        # pdb.set_trace()
-        # record_values = [(record.value, record.captured_time.strftime('%Y-%m-%d %H:%M:%S')) for record in records]
-        record_values = [(record.value, record.captured_time) for record in records]
-        return {'sensor_name': sensor.sensor_name,
-                'number_of_values': len(record_values),
-                'sensor_values': record_values}, 200
+    return {'sensor_name': sensor.sensor_name,
+            'number_of_values': len(results),
+            'sensor_values': results}, 200
 
 
 if __name__ == '__main__':
