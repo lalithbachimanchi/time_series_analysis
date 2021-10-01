@@ -2,6 +2,7 @@ import datetime
 from time import sleep
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+# from flask_ngrok import run_with_ngrok
 import numpy as np
 from sqlalchemy.sql import func
 from flask import request
@@ -9,6 +10,7 @@ from sqlalchemy.dialects.mysql import DATETIME
 import mysql.connector
 
 app = Flask(__name__)
+# run_with_ngrok(app)
 
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:root@db/data_analysis'
@@ -92,7 +94,7 @@ def get_sensor_values():
     }
     connection = mysql.connector.connect(**config)
     cursor = connection.cursor()
-    cursor.execute('SELECT value, created_time FROM sensor_info where created_time >= "{}" and created_time <= "{}"'.format(start_date_time, end_date_time))
+    cursor.execute('SELECT value, created_time FROM sensor_info where sensor_id={} and created_time >= "{}" and created_time <= "{}"'.format(sensor_id, start_date_time, end_date_time))
     results = [(value, created_time.strftime('%Y-%m-%d %H:%M:%S.%f')) for (value, created_time) in cursor]
     cursor.close()
     connection.close()
